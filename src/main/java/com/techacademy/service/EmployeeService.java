@@ -83,24 +83,18 @@ public class EmployeeService {
     }
 
     //追加
-   @Transactional
+    @Transactional
     public ErrorKinds update(Employee employee) {
-       Employee oldEmployee = findByCode(employee.getCode());
-       if ("".equals(employee.getPassword())==false) {
-        // パスワードチェック
-           ErrorKinds result = employeePasswordCheck(employee);
-           if (ErrorKinds.CHECK_OK != result) {
-               return result;
-           }
-           //パスワード更新
-
-     }else {
-         employee.setPassword(oldEmployee.getPassword());
-     }
-
-
-
-
+        Employee oldEmployee = findByCode(employee.getCode());
+        if ("".equals(employee.getPassword())) {
+            employee.setPassword(oldEmployee.getPassword());
+        } else {
+            // パスワードチェック
+            ErrorKinds result = employeePasswordCheck(employee);
+            if (ErrorKinds.CHECK_OK != result) {
+                return result;
+            }
+        }
 
        employee.setDeleteFlg(oldEmployee.isDeleteFlg());
        employee.setCreatedAt(oldEmployee.getCreatedAt());
