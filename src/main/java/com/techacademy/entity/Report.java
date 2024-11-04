@@ -33,8 +33,8 @@ public class Report {
     //日付
     @Column(nullable = false)
     @NotNull
-    @DateTimeFormat(pattern = "yyy-MM-dd")
-    private LocalDate report_date;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate reportDate;
 
     //タイトル
     @Column(length = 100, nullable = false)

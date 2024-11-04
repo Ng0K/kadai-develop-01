@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.techacademy.constants.ErrorKinds;
+import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 import com.techacademy.repository.ReportRepository;
 
@@ -23,68 +24,85 @@ public class ReportService {
 
     }
 
-    //一覧表示
-    public List<Report> findAll(){
-        return reportRepository.findAll();
-    }
-
     // 1件を検索
-    public Report findByIdAndReportdate(int Id, LocalDate report_date) {
-        // findByIdAndReportdateで検索
-        Optional<Report> option = reportRepository.findByIdAndReportdate(Id, report_date);
+    public Report findById(Integer id) {
+        // findByIdで検索
+        Optional<Report> option = reportRepository.findById(id);
         // 取得できなかった場合はnullを返す
         Report report = option.orElse(null);
         return report;
     }
 
-    //日付重複チェック
+    public List<Report> findByEmployee(Employee employee) {
+        // findByIdで検索
+        List<Report> option = reportRepository.findByEmployee(employee);
+
+        return option;
+    }
+
+    // 一覧表示
+    public List<Report> findAll() {
+        return reportRepository.findAll();
+    }
+
+    // 1件を検索
+    public boolean existsByEmployeeAndReportDate(Employee employee, LocalDate reportDate) {
+        // findByIdAndReportdateで検索
+        boolean isExists = reportRepository.existsByEmployeeAndReportDate(employee, reportDate);
+
+        return isExists;
+    }
+
+    // 日付重複チェック
     @Transactional
     public ErrorKinds save(Report report) {
 
-    if (findByIdAndReportdate(report.getId(), report.getReport_date()) != null){
-        return ErrorKinds.DATECHECK_ERROR;
+        if (existsByEmployeeAndReportDate(report.getEmployee(), report.getReportDate())) {
+
+            return ErrorKinds.DATECHECK_ERROR;
+        }
+
+        report.setDeleteFlg(false);
+
+        LocalDateTime now = LocalDateTime.now();
+        report.setCreatedAt(now);
+        report.setUpdatedAt(now);
+
+        reportRepository.save(report);
+        return ErrorKinds.SUCCESS;
+
     }
 
-    report.setDeleteFlg(false);
-
-    LocalDateTime now = LocalDateTime.now();
-    report.setCreatedAt(now);
-    report.setUpdatedAt(now);
-
-    reportRepository.save(report);
-    return ErrorKinds.SUCCESS;
-
-    }
-
-    //削除処理
+    // 削除処理
     @Transactional
-    public ErrorKinds delete(int Id, LocalDate report_date) {
+    public ErrorKinds delete(Integer id) {
 
-    Report report = findByIdAndReportdate(Id, report_date);
-    LocalDateTime now = LocalDateTime.now();
-    report.setUpdatedAt(now);
-    report.setDeleteFlg(true);
+        Report report = findById(id);
 
-    return ErrorKinds.SUCCESS;
+        LocalDateTime now = LocalDateTime.now();
+        report.setUpdatedAt(now);
+        report.setDeleteFlg(true);
+
+        return ErrorKinds.SUCCESS;
     }
 
-    //更新処理
+    // 更新処理
     @Transactional
     public ErrorKinds update(Report report) {
-        Report oldReport = findByIdAndReportdate(report.getId(),report.getReport_date());
+        Report oldReport = findById(report.getId());
 
-    if (findByIdAndReportdate(report.getId(), report.getReport_date()) != null){
-        return ErrorKinds.DATECHECK_ERROR;
-    }
-    report.setDeleteFlg(oldReport.isDeleteFlg());
-    report.setCreatedAt(oldReport.getCreatedAt());
+        if (reportRepository.existsByEmployeeAndReportDateAndIdNot(report.getEmployee(), report.getReportDate(), report.getId()) ) {
+            return ErrorKinds.DATECHECK_ERROR;
+        }
+        report.setDeleteFlg(oldReport.isDeleteFlg());
+        report.setCreatedAt(oldReport.getCreatedAt());
 
-    LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
-    report.setUpdatedAt(now);
+        report.setUpdatedAt(now);
 
-     reportRepository.save(report);
-     return ErrorKinds.SUCCESS;
+        reportRepository.save(report);
+        return ErrorKinds.SUCCESS;
     }
 
 }
