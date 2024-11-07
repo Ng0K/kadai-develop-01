@@ -1,5 +1,6 @@
 package com.techacademy.controller;
 
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.techacademy.constants.ErrorKinds;
 import com.techacademy.constants.ErrorMessage;
+import com.techacademy.entity.Employee;
 import com.techacademy.entity.Report;
 import com.techacademy.service.ReportService;
 import com.techacademy.service.UserDetail;
@@ -33,10 +35,19 @@ public class ReportController {
 
     // 日報一覧画面
     @GetMapping
-    public String list(Model model) {
+    public String list(@AuthenticationPrincipal UserDetail userDetail, Model model) {
+        Employee employee = userDetail.getEmployee();
+        List<Report> reports;
+        if(employee.getRole() == Employee.Role.ADMIN) {
+            reports = reportService.findAll();
+        }else {
+            reports = reportService.findByEmployee(employee);
+        }
 
-        model.addAttribute("listSize", reportService.findAll().size());
-        model.addAttribute("reportList", reportService.findAll());
+        model.addAttribute("listSize", reports.size());
+        model.addAttribute("reportList", reports);
+
+
 
         return "reports/list";
     }
@@ -60,10 +71,11 @@ public class ReportController {
 
     // 日報新規登録処理
     @PostMapping(value = "/add")
-    public String add(@Validated Report report, BindingResult res, Model model, @AuthenticationPrincipal UserDetail userDetail) {
-       report.setEmployee(userDetail.getEmployee());
+    public String add(@Validated Report report, BindingResult res, Model model,
+            @AuthenticationPrincipal UserDetail userDetail) {
+        report.setEmployee(userDetail.getEmployee());
 
-        if(res.hasErrors()) {
+        if (res.hasErrors()) {
             return create(report, userDetail, model);
         }
         try {
@@ -92,13 +104,16 @@ public class ReportController {
         return "redirect:/reports";
     }
 
-    //日報更新画面
+    // 日報更新画面
 
     @GetMapping(value = "/{id}/update/")
-    public String getReport(@PathVariable Integer id, Model model, Report report, @AuthenticationPrincipal UserDetail userDetail) {
+    public String getReport(@PathVariable Integer id, Model model, Report report,
+            @AuthenticationPrincipal UserDetail userDetail) {
+
+        model.addAttribute("employee", userDetail.getEmployee());
+
         if (id != null) {
             model.addAttribute("report", reportService.findById(id));
-
 
         } else {
             model.addAttribute("report", report);
@@ -106,13 +121,12 @@ public class ReportController {
         return "reports/update";
     }
 
-
-    //日報更新処理
+    // 日報更新処理
     @PostMapping(value = "/{id}/update/")
 
-    public String postReport(@Validated Report report, BindingResult res, Model model, @AuthenticationPrincipal UserDetail userDetail) {
+    public String postReport(@Validated Report report, BindingResult res, Model model,
+            @AuthenticationPrincipal UserDetail userDetail) {
         report.setEmployee(userDetail.getEmployee());
-
 
         if (res.hasErrors()) {
             return getReport(null, model, report, userDetail);

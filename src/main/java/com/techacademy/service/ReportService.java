@@ -35,9 +35,9 @@ public class ReportService {
 
     public List<Report> findByEmployee(Employee employee) {
         // findByIdで検索
-        List<Report> option = reportRepository.findByEmployee(employee);
+        List<Report> reports = reportRepository.findByEmployee(employee);
 
-        return option;
+        return reports;
     }
 
     // 一覧表示
